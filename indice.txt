@@ -11,3 +11,6 @@ RESPONSE FORMAT TEXT
 
 PETITION POST, ShouldBindJSON (pasar de estructura a JSON)
 - exercise_3 -------> "saludar"
+
+MINI APP (PETITION: GET: (all, byId params, search query))
+- exercise_4 -------> "products"
