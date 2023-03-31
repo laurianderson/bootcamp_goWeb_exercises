@@ -3,8 +3,11 @@ Indice:
 Use: FRAMEWORK: Gin
 ............................................class1_31march..............................................................
 
-CREATE ROUTER AND PETITION GET: RESPONSE JSON
+CREATE ROUTER AND PETITION GET: RESPONSE FORMAT JSON
 - exercise_1 -------> "Hello, world"
 
-RESPONSE TEXT
+RESPONSE FORMAT TEXT
 - exercise_2 -------> "ping, pong"
+
+PETITION POST, ShouldBindJSON (pasar de estructura a JSON)
+- exercise_3 -------> "saludar"
