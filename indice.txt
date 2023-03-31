@@ -1,5 +1,10 @@
 Indice:
+
+Use: FRAMEWORK: Gin
 ............................................class1_31march..............................................................
 
-CREATE ROUTER AND PETITION GET
+CREATE ROUTER AND PETITION GET: RESPONSE JSON
 - exercise_1 -------> "Hello, world"
+
+RESPONSE TEXT
+- exercise_2 -------> "ping, pong"
