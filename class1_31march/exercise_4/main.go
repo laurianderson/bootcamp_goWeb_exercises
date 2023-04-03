@@ -10,13 +10,17 @@ package main
 
 import (
 	"encoding/json"
+	//CAMBIAR ESTOOO!!!!!!
 	"io/ioutil"
 	"net/http"
 	"github.com/gin-gonic/gin"
 	"strconv"
+	//"time"
+	"log"
 )
 
-//Creamos una estructura producto siguiendo los campos que tiene el products.json
+
+//Package service
 type Product struct {
 	ID         	 int64 `json:"id"`
     Name       	 string `json:"name"`
@@ -27,6 +31,19 @@ type Product struct {
 	Price        float64 `json:"price"`
 }
 
+
+//Declaramos de manera global el slide de Productos
+var ProductSlide = readJson()
+
+//Creamos una variable que guarde el valor del id y lo vaya incrementando
+var lastID int
+
+/*Generar un var de errores personalizados
+var ( 
+	ErrorProductIvalid = errors.New("Invalid Product")
+	ErrorProductInternal = errors.New("Internal Error")
+)
+*/
 
 //Creamos una función que lea el archivo products.json y me devuelva un slide de productos donde los va a guardar
 func readJson() []Product {
@@ -40,17 +57,24 @@ func readJson() []Product {
 
 	//Con la función unmarshal pasamos de byte a estructura y le indicamos que el valor(&) lo guarde en el slide Products
 	json.Unmarshal([]byte(bytes), &Products)
+	return nil
+
+	
 
 	return Products
+	
+	
 }
 
 
-//Declaramos de manera global el slide de Productos
-var ProductSlide = readJson()
+//Package handler
+func getPing() gin.HandlerFunc{
+	return func(ctx *gin.Context){
+		ctx.JSON(http.StatusOK, gin.H{"data": "pong"})
+	}
+}
 
 
-//....................................................................................................................
-//Funciones que actuan como el controlador
 func getAll(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, ProductSlide)
 }
@@ -90,16 +114,87 @@ func searchByPriceMin(ctx *gin.Context) {
 	//Acá evaluamos si el largo del slide es igual a 0, error
 	if len(productsFilter) == 0 {
 		ctx.JSON(http.StatusNotFound, gin.H{"message":  "Not found product with price: " + priceMin})
+		return
 	}
 }
+
+
+var Token = "123456"
+
+//Generamos una función que nos devuelva otra función con el context
+func saveProduct() gin.HandlerFunc {
+	type request struct {
+		Name         string `json:"name" biding: "required"`
+		Quantity     int `json:"quantity" biding: "required"`
+		Code_Value 	 string `json:"code_value" biding: required`
+		Is_Published bool `json:"is_published" biding:required`
+		Expiration   string `json:"expiration" biding:required`
+		Price        float64 `json:"price" biding:required`
+	}
+	
+	return func(ctx *gin.Context) {
+		var req request
+
+		//auth
+		token := ctx.GetHeader("token")
+		if token != Token {
+			ctx.JSON(http.StatusUnauthorized, gin.H{"message":  "Error: invalid token"})
+			return
+		}
+
+		//Hace el decoding + binding required (pasa la info del body al request)
+		if err := ctx.ShouldBindJSON(&req); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"message": "Error: Invalid request"})
+			log.Print("Log:", err)
+			return
+		}
+		//si la petición es correcta le agregamos un id a nuestro producto
+		pr := Product{
+			ID : int64(lastID) + 1,
+			Name : req.Name,
+            Quantity : req.Quantity,
+            Code_Value : req.Code_Value,
+            Is_Published : true,
+            Expiration : req.Expiration,
+			Price: req.Price,
+		}
+		for _,product := range ProductSlide{
+			if pr.Code_Value == product.Code_Value{
+				ctx.JSON(http.StatusBadRequest, gin.H{"message": "invalid request: code value must be unique", "data":nil})
+				//log.Println(err)
+				return
+			}
+		}
+		
+			ProductSlide = append(ProductSlide, pr)
+
+			ctx.JSON(http.StatusOK, gin.H{"message": "Succes", "data": pr})
+	}
+
+}
+
+/*
+func (p *Product) Valid() error{
+//Esto para validar en vez del biding en la estructura 
+
+}
+*/
+
+
 func main() {
 	
 	router := gin.Default()
+	router.GET("/ping", getPing())
+	//Agrupo las rutas (añido)
+	pr := router.Group("/products")
+	{ 
+		//Endpoint a cual pegarles, con las funciones que explican cómo hacer eso.
+		pr.GET("/", getAll)
+		pr.GET("/:id", getById)
+		pr.GET("/search", searchByPriceMin)
 
-	//Endpoint a cual pegarles, con las funciones que explican cómo hacer eso.
-	router.GET("products", getAll)
-	router.GET("products/:id", getById)
-	router.GET("products/search", searchByPriceMin)
+		pr.POST("/", saveProduct())
+	}
 
 	router.Run()
 }
