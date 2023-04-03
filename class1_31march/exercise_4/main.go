@@ -122,7 +122,7 @@ func searchByPriceMin(ctx *gin.Context) {
 var Token = "123456"
 
 //Generamos una función que nos devuelva otra función con el context
-func saveProduct() gin.HandlerFunc {
+func createProduct() gin.HandlerFunc {
 	type request struct {
 		Name         string `json:"name" biding: "required"`
 		Quantity     int `json:"quantity" biding: "required"`
@@ -134,6 +134,7 @@ func saveProduct() gin.HandlerFunc {
 	
 	return func(ctx *gin.Context) {
 		var req request
+		
 
 		//auth
 		token := ctx.GetHeader("token")
@@ -149,7 +150,7 @@ func saveProduct() gin.HandlerFunc {
 			return
 		}
 		//si la petición es correcta le agregamos un id a nuestro producto
-		pr := Product{
+		pr := &Product{
 			ID : int64(lastID) + 1,
 			Name : req.Name,
             Quantity : req.Quantity,
@@ -165,10 +166,11 @@ func saveProduct() gin.HandlerFunc {
 				return
 			}
 		}
-		
-			ProductSlide = append(ProductSlide, pr)
+		//FALTAA!! validaciones para la fecha usar time parse, para parsear de string a tipo time 
+			
+			ProductSlide = append(ProductSlide, *pr)
 
-			ctx.JSON(http.StatusOK, gin.H{"message": "Succes", "data": pr})
+			ctx.JSON(http.StatusCreated, gin.H{"message": "Succes", "data": pr})
 	}
 
 }
@@ -193,7 +195,7 @@ func main() {
 		pr.GET("/:id", getById)
 		pr.GET("/search", searchByPriceMin)
 
-		pr.POST("/", saveProduct())
+		pr.POST("/", createProduct())
 	}
 
 	router.Run()
